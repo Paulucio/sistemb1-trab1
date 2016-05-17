@@ -23,7 +23,9 @@
 *.lib
 
 # Assembly files
-*.lst
+*.LST
+*.EXE
+*.OBJ
 
 # Executables
 *.exe
