@@ -1,5 +1,3 @@
-
-
 segment code
 ..start:
 ; iniciar os registros de segmento DS e SS e o ponteiro de pilha SP
@@ -41,7 +39,6 @@ mov si, DADOS
 		cmp dl, 20h      	; verifica se e espaco
 		je FIM_PIX       	; se for espaco vai termina a leitura do pixel
 
-
 		mov [si], dl     	; se nao entrar no jump salva leitura para ler o proximo
 		add si, 1        	; incrementa o ponteiro para a proxima posicao
 		jmp LEITURA
@@ -51,8 +48,7 @@ mov si, DADOS
 
 	FIM_PIX:
 	mov byte[si], 20h	; coloca espaco para indicar final do numero aki o valor ja se encontra em PIXEL
-	jmp printa
-v:		
+
 	xor cx,cx		; zera cx
 	mov si, PIXEL		; endereco de pixel em SI
 
@@ -65,31 +61,31 @@ v:
 		jmp VOLTA
 
 	SAI:
-	xor bx, bx
+	xor bx, bx			; zera bx e di
 	xor di, di
-	mov bh, 1
-	mov bl, 10
-	sub si, 1
+	mov bh, 1			; bh vai ter o valor a ser multiplicado na iteracao atual
+	mov bl, 10			; bl vai ter o valor a ser multiplicado na proxima iteracao
+	sub si, 1			; pega os algarismos de tras para frente
 
 	A2B:
-		mov dl, byte[si]
-		sub dl, 30h
-		mov al, bh
-		mul dl
-		and ax, 00ffh
-		add di, ax
-		mov bh, bl
+		mov dl, byte[si]	; dl recebe o algarismo
+		sub dl, 30h		; converte para binario
+		mov al, bh		; pega o valor a ser multiplicado
+		mul dl			
+		and ax, 00ffh		; pega so a parte baixa de ax
+		add di, ax		; soma ao acumulador di
+		mov bh, bl		; atualiza proximos valores que serao multiplicados
 		mov al, bh
 		mul bl
 		mov bl, al
-		sub si, 1
-		loop A2B
+		sub si, 1		; aponta para o proximo algarismo
+		loop A2B		; repete ate acabar
 	
-	pop si			; numero em binario em di
-	mov [si], di
-	add si, 1
-	pop cx
-	loop LE_PIX
+	pop si				; recupera si
+	mov [si], di			; numero em binario em di
+	add si, 1			; pega proximo dado
+	pop cx				; recupera cx
+	loop LE_PIX			; repete ate acabar os dados
 	
 
 mov bx,[HANDLER] 	; coloca manipulador do arquivo em bx
@@ -107,18 +103,8 @@ int 21h 		; chama serviço do DOS
 ; int 10h 		; chama serviço da BIOS
 ; loop NextChar
 
-;mov dx, PIXEL
-;mov ah,9
-;int 21h
-
 mov ah,4ch
 int 21h
-
-printa:
-	mov dx, PIXEL
-	mov ah,9
-	int 21h
-	jmp v
 
 segment data
 CR equ 0dh
