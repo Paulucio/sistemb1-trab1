@@ -25,8 +25,7 @@ call INTERFACE
 
 call LE_ARQUIVO
 
-;call IMPRIME_IMG
-
+call IMPRIME_IMG
 
 mov ah,08h
 int 21h
@@ -49,7 +48,7 @@ INTERFACE:
 	;segundo ponto
 	mov	ax, 0 ; x
 	push ax
-	mov	ax, 480 ; y
+	mov	ax, 479 ; y
 	push ax
 	call line
 
@@ -63,7 +62,7 @@ INTERFACE:
 	;segundo ponto
 	mov	ax, 639 ; x
 	push ax
-	mov	ax, 480 ; y
+	mov	ax, 479 ; y
 	push ax
 	call line
 
@@ -75,7 +74,7 @@ INTERFACE:
 	mov	ax, 479 ; y
 	push ax
 	;segundo ponto
-	mov	ax, 640 ; x
+	mov	ax, 639 ; x
 	push ax
 	mov	ax, 479 ; y
 	push ax
@@ -89,7 +88,7 @@ INTERFACE:
 	mov	ax, 0 ; y
 	push ax
 	;segundo ponto
-	mov	ax, 640 ; x
+	mov	ax, 639 ; x
 	push ax
 	mov	ax, 0 ; y
 	push ax
@@ -114,12 +113,12 @@ INTERFACE:
 	;primeiro ponto
 	mov	ax, 0; x
 	push ax
-	mov	ax, 380 ; y
+	mov	ax, 381 ; y
 	push ax
 	;segundo ponto
-	mov	ax, 250 ; x
+	mov	ax, 251 ; x
 	push ax
-	mov	ax, 380 ; y
+	mov	ax, 381 ; y
 	push ax
 	call line
 
@@ -128,16 +127,16 @@ INTERFACE:
 	;primeiro ponto
 	mov	ax, 60; x
 	push ax
-	mov	ax, 480 ; y
+	mov	ax, 479 ; y
 	push ax
 	;segundo ponto
 	mov	ax, 60 ; x
 	push ax
-	mov	ax, 380 ; y
+	mov	ax, 381 ; y
 	push ax
 	call line
 
-	;salvar
+	;sair
 	mov	byte[cor],branco_intenso
 	;primeiro ponto
 	mov	ax, 120; x
@@ -147,7 +146,7 @@ INTERFACE:
 	;segundo ponto
 	mov	ax, 120 ; x
 	push ax
-	mov	ax, 380 ; y
+	mov	ax, 381 ; y
 	push ax
 	call line
 
@@ -156,24 +155,24 @@ INTERFACE:
 	;primeiro ponto
 	mov	ax, 180; x
 	push ax
-	mov	ax, 480 ; y
+	mov	ax, 479 ; y
 	push ax
 	;segundo ponto
 	mov	ax, 180 ; x
 	push ax
-	mov	ax, 380 ; y
+	mov	ax, 381 ; y
 	push ax
 	call line
 
 	;histoe
 	mov	byte[cor],branco_intenso
 	;primeiro ponto
-	mov	ax, 250; x
+	mov	ax, 251; x
 	push ax
-	mov	ax, 480 ; y
+	mov	ax, 479 ; y
 	push ax
 	;segundo ponto
-	mov	ax, 250 ; x
+	mov	ax, 251 ; x
 	push ax
 	mov	ax, 0 ; y
 	push ax
@@ -182,12 +181,12 @@ INTERFACE:
 	;divisao histogramas
 	mov	byte[cor],branco_intenso
 	;primeiro ponto
-	mov	ax, 250; x
+	mov	ax, 251; x
 	push ax
 	mov	ax, 240 ; y
 	push ax
 	;segundo ponto
-	mov	ax, 640 ; x
+	mov	ax, 639 ; x
 	push ax
 	mov	ax, 240 ; y
 	push ax
@@ -388,42 +387,47 @@ ret
 ;--------------------------------------------- FIM LEITURA ARQUIVO ---------------------------
 
 IMPRIME_IMG:
-	mov bx, DADOS
-	mov dx, 0  ;posx 
+	mov dx, 1  ;posx 
 	mov ax, 380   ;posy
 	xor si, si	
-	push dx
-	push ax
-	mov cx, 62500
-	imprime:
+	mov cx, 250 ;n de colunas na horizontal
+	imprime_l: ; varia y
 		push cx
-		push dx ;posx
-		push ax	;posy
+		push ax
+		push dx
+		mov cx, 250
+		imprime_c: ;varia x
+			push cx
+			push ax
+			push dx ;posx
+			push ax	;posy
+			mov al, byte[DADOS+si]
+			and ax, 00FFh
+			mov bh, 10h  ; 16 para dividir
+			div bh
+			mov byte[cor], al
 
-		mov al, 10h ; 16 para dividir
-		mov ah, byte[DADOS+si]
-		div ah
-		mov byte[cor], al
+			call plot_xy
 
-		call plot_xy
-
-		pop cx
-		pop ax
+			pop ax
+			pop cx
+			add si,1
+			add dx, 1
+		loop imprime_c
 		pop dx
-
-		add si,1
-		add dx, 1
-		cmp dx, 251
-		je FIM_LINHA
-	loop imprime	
+		pop ax
+		sub ax,1
+		pop cx
+	loop imprime_l	
 ret
-
 	
-FIM_LINHA:
-	mov dx, 0
-	sub ax, 1
-	sub cx, 1
-jmp imprime	
+; ----------------------------- HISTOGRAMA --------------------------------
+
+HISTOGRAMA:
+	
+
+
+
 
 ;***************************************************************************
 ;
@@ -1012,7 +1016,9 @@ ARQUIVO 	db 	'imagem.txt','$'
 RESULTADO 	db 	0, '$'
 N_PIX 		dw 	62500
 DADOS 		resb 	62500
-f db 0
+HISTOGRAMA	resw	255
+
+
 
 ;*************************************************************************
 segment stack stack
