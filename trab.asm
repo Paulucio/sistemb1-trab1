@@ -29,11 +29,15 @@ call LE_ARQUIVO
 
 call HISTOG
 
-;call PRINTA_HIST
 
 call F_ACUM
 
-call PRINTA_FACUM
+call EQ_IMG
+call IMPRIME_IMG
+call HISTOG
+call PRINTA_HIST
+
+;call PRINTA_FACUM
 
 
 mov ah,08h
@@ -537,6 +541,31 @@ PRINTA_FACUM:
 	loop p_acum
 ret
 
+; ----------------------------- EQUALIZA IMAGEM ------------------------------
+EQ_IMG:
+	xor si, si
+	xor di, di
+	xor ax, ax
+	mov cx, 62500
+	int 3
+	equaliza:
+		push cx
+		mov bl, byte[DADOS + si]
+		and bx, 00FFh ; bl fica com o valor original da imagem
+		mov di, bx
+		shl di, 1
+		mov dx, [FACUMULADA + di]
+		and dx, 00FFh
+		mov ax, 00FFh ; coloca 255 em al
+		mul dl
+		mov bx, 62500
+		div bx
+		mov [DADOS + si], al
+		add di,2
+		inc si
+		pop cx
+	loop equaliza
+ret
 
 ;***************************************************************************
 ;
