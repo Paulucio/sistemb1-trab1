@@ -21,15 +21,20 @@ mov al,12h
 mov ah,0
 int 10h
 
-call INTERFACE
+;call INTERFACE
 
 call LE_ARQUIVO
 
-call IMPRIME_IMG
+;call IMPRIME_IMG
 
 call HISTOG
 
-call PRINTA_HIST
+;call PRINTA_HIST
+
+call F_ACUM
+
+call PRINTA_FACUM
+
 
 mov ah,08h
 int 21h
@@ -38,6 +43,7 @@ mov al,[modo_anterior]   	; modo anterior
 int 10h
 mov ah,4ch
 int 21h
+
 
 ; ---------------------------- INTERFACE --------------------------------------
 INTERFACE:
@@ -329,8 +335,8 @@ ret
 ; ---------------------------- FIM DA INTERFACE -------------------------------
 
 
-; ---------------------------- LEITURA DE ARQUIVO -----------------------------
 
+; ---------------------------- LEITURA DE ARQUIVO -----------------------------
 LE_ARQUIVO:
 	mov dx, ARQUIVO 	; coloca o endereço do nome do arquivo em dx
 	mov al,2 		; modo de acesso - leitura e escrita
@@ -414,10 +420,8 @@ LE_ARQUIVO:
 	mov bx,[HANDLER] 	; coloca manipulador do arquivo em bx
 	mov ah,3Eh 		; função 3Eh - fechar um arquivo
 	int 21h 		; chama serviço do DOS
-
 ret
 ;--------------------------------------------- FIM LEITURA ARQUIVO ---------------------------
-
 IMPRIME_IMG:
 	mov dx, 1  ;posx
 	mov ax, 380   ;posy
@@ -450,9 +454,7 @@ IMPRIME_IMG:
 		pop cx
 	loop imprime_l
 ret
-
 ; ----------------------------- HISTOGRAMA --------------------------------
-
 HISTOG:     ;lembrar de colocar constante em 62500
 	xor si, si
 	xor di, di
@@ -470,12 +472,10 @@ HISTOG:     ;lembrar de colocar constante em 62500
 		pop cx
 	loop hist
 ret
-
 ; ----------------------------- IMPRIME HISTOGRAMA --------------------------
 PRINTA_HIST:
 	mov dx, 320 ; posx inicial
 	xor si,si
-
 	mov cx, 255
 	p_hist:
 		mov ax, 240 ;posy inicial
@@ -497,8 +497,47 @@ PRINTA_HIST:
 		add si,2
 	loop p_hist
 ret
+; ----------------------------- FUNCAO ACUMULADA ---------------------------
+F_ACUM:
+	xor si, si
+	xor di, di
+	xor ax, ax
+	mov cx, 255
+	acumulacao:
+		push cx
+		add ax, [HISTOGRAMA + di]
+		mov [FACUMULADA + di], ax
+		add di,2
+		pop cx
+	loop acumulacao
+ret
+; ----------------------------- IMPRIME FUNCAO ACUMULADA -----------------------
+PRINTA_FACUM:
+	mov dx, 320 ; posx inicial
+	xor si,si
+	mov cx, 255
+	p_acum:
+		mov ax, 240 ;posy inicial
+		push dx
+		push dx ; x1
+		push ax	; y1
+		push dx ; x2
 
-; ----------------------------- FIM HISTOGRAMA -----------------------------
+		mov bx, [FACUMULADA + si]
+		shr bx, 9
+		add ax, bx
+
+		push ax ;y2
+
+		call line
+
+		pop dx
+		inc dx
+		add si,2
+	loop p_acum
+ret
+
+
 ;***************************************************************************
 ;
 ;   fun??o cursor
@@ -813,11 +852,10 @@ BUFFER 		db 	0,20h,'$'
 PIXEL 		db 	0,0,0,20h,'$'
 ARQUIVO 	db 	'imagem.txt','$'
 RESULTADO 	db 	0, '$'
+DADOS: 		resb 	62501
+HISTOGRAMA:	resw	256
+FACUMULADA:	resw	256
 N_PIX 		dw 	62500
-DADOS 		resb 	62500
-HISTOGRAMA	resw	255
-f db '34'
-
 
 
 ;*************************************************************************
