@@ -29,33 +29,8 @@ call IMPRIME_IMG
 
 call HISTOG
 
-mov dx, 255
-push dx
-mov dx, 240
-push dx
-mov dx, 255
-push dx
-mov dx, 639
-push dx
+call PRINTA_HIST
 
-call line
-
-mov dx, 510
-push dx
-mov dx, 240
-push dx
-mov dx, 510
-push dx
-mov dx, 639
-push dx
-
-call line
-
-;call PRINTA_HIST
-
-mov bx, HISTOGRAMA
-mov cx, f
-int 3
 mov ah,08h
 int 21h
 mov ah,0   			; set video mode
@@ -242,7 +217,7 @@ INTERFACE:
 	mov cx,21			;numero de caracteres
 	mov bx,0
 	mov dh,25			;linha 0-29
-	mov dl,4			;coluna 0-79
+	mov dl,5			;coluna 0-79
 	mov	byte[cor],branco_intenso
 	w_disc:
 	call	cursor
@@ -256,7 +231,7 @@ INTERFACE:
 	mov cx,6			;numero de caracteres
 	mov bx,0
 	mov dh,27			;linha 0-29
-	mov dl,10			;coluna 0-79
+	mov dl,12			;coluna 0-79
 	mov	byte[cor],branco_intenso
 	w_periodo:
 	call	cursor
@@ -321,6 +296,34 @@ INTERFACE:
 	inc bx			;proximo caracter
 	inc	dl			;avanca a coluna
 	loop   w_histeq
+
+	;Nome Histograma Normal no lado direito
+	mov cx,17			;numero de caracteres
+	mov bx,0
+	mov dh,1			;linha 0-29
+	mov dl,47			;coluna 0-79
+	mov	byte[cor],branco_intenso
+	s_hist:
+	call	cursor
+	mov al,[bx+S_HIST]
+	call caracter
+	inc bx			;proximo caracter
+	inc	dl			;avanca a coluna
+	loop   s_hist
+
+	;Nome Histograma Equalizado no lado direito
+	mov cx,21			;numero de caracteres
+	mov bx,0
+	mov dh,16			;linha 0-29
+	mov dl,45			;coluna 0-79
+	mov	byte[cor],branco_intenso
+	s_histeq:
+	call	cursor
+	mov al,[bx+S_HISTEQ]
+	call caracter
+	inc bx			;proximo caracter
+	inc	dl			;avanca a coluna
+	loop   s_histeq
 
 ret
 ; ---------------------------- FIM DA INTERFACE -------------------------------
@@ -391,7 +394,7 @@ LE_ARQUIVO:
 			mov dl, byte[si]	; dl recebe o algarismo
 			sub dl, 30h		; converte para binario
 			mov al, bh		; pega o valor a ser multiplicado
-			mul dl			
+			mul dl
 			and ax, 00ffh		; pega so a parte baixa de ax
 			add di, ax		; soma ao acumulador di
 			mov bh, bl		; atualiza proximos valores que serao multiplicados
@@ -416,9 +419,9 @@ ret
 ;--------------------------------------------- FIM LEITURA ARQUIVO ---------------------------
 
 IMPRIME_IMG:
-	mov dx, 1  ;posx 
+	mov dx, 1  ;posx
 	mov ax, 380   ;posy
-	xor si, si	
+	xor si, si
 	mov cx, 250 ;n de colunas na horizontal
 	imprime_l: ; varia y
 		push cx
@@ -445,9 +448,9 @@ IMPRIME_IMG:
 		pop ax
 		sub ax,1
 		pop cx
-	loop imprime_l	
+	loop imprime_l
 ret
-	
+
 ; ----------------------------- HISTOGRAMA --------------------------------
 
 HISTOG:     ;lembrar de colocar constante em 62500
@@ -455,41 +458,47 @@ HISTOG:     ;lembrar de colocar constante em 62500
 	xor di, di
 	xor ax, ax
 	mov cx, 62500
-	hist:	
+	hist:
 		push cx
 
 		mov al, byte[DADOS+si]
 		inc si
-	
+
 		mov di, ax
-		inc word[HISTOGRAMA + di + 1]
+		shl di,1
+		inc word[HISTOGRAMA + di]
 		pop cx
 	loop hist
 ret
 
+; ----------------------------- IMPRIME HISTOGRAMA --------------------------
 PRINTA_HIST:
-	mov dx, 251 ; posx inicial
+	mov dx, 320 ; posx inicial
 	xor si,si
 
 	mov cx, 255
 	p_hist:
 		mov ax, 240 ;posy inicial
-		push dx 
+		push dx
 		push dx ; x1
 		push ax	; y1
 		push dx ; x2
 
 		mov bx, [HISTOGRAMA + si]
+		shr bx, 4
 		add ax, bx
+
 		push ax ;y2
-		
-		call line		
-		
+
+		call line
+
 		pop dx
 		inc dx
 		add si,2
 	loop p_hist
 ret
+
+; ----------------------------- FIM HISTOGRAMA -----------------------------
 ;***************************************************************************
 ;
 ;   fun??o cursor
@@ -795,7 +804,9 @@ PERIODO		db	'2016/1';6 letras
 ABRIR 		db 	'Abrir' ;5 letras
 SAIR 		db	'Sair' ; 4 letras
 HIST 		db	'Hist' ;4 letras
-HISTEQ 		db 	'Histeq';6 letras
+HISTEQ 		db 	'Histeq' ;6 letras
+S_HIST		db	'Histograma Normal' ;17 letras
+S_HISTEQ	db	'Histograma Equalizado' ;21 letras
 
 HANDLER 	dw 	0
 BUFFER 		db 	0,20h,'$'
