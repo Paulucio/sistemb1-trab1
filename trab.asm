@@ -555,9 +555,9 @@ EQ_IMG:
 		mov di, bx
 		shl di, 1
 		mov dx, [FACUMULADA + di]
-		and dx, 00FFh
-		mov ax, 00FFh ; coloca 255 em al
-		mul dl
+		;and dx, 00FFh
+		mov ax, 256 ; coloca 256 em al
+		mul dx
 		mov bx, 62500
 		div bx
 		mov [DADOS + si], al
