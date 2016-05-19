@@ -21,14 +21,14 @@ mov al,12h
 mov ah,0
 int 10h
 
-;call INTERFACE
+call INTERFACE
 
 call LE_ARQUIVO
 
 ;call IMPRIME_IMG
 
 call HISTOG
-
+;call PRINTA_HIST
 
 call F_ACUM
 
@@ -482,7 +482,7 @@ PRINTA_HIST:
 	xor si,si
 	mov cx, 255
 	p_hist:
-		mov ax, 240 ;posy inicial
+		mov ax, 250 ;posy inicial
 		push dx
 		push dx ; x1
 		push ax	; y1
@@ -521,7 +521,7 @@ PRINTA_FACUM:
 	xor si,si
 	mov cx, 255
 	p_acum:
-		mov ax, 240 ;posy inicial
+		mov ax, 250 ;posy inicial
 		push dx
 		push dx ; x1
 		push ax	; y1
