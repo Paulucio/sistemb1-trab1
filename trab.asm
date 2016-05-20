@@ -25,20 +25,28 @@ call INTERFACE
 
 call LE_ARQUIVO
 
-;call IMPRIME_IMG
+call IMPRIME_IMG
 
 call HISTOG
-;call PRINTA_HIST
+
+mov ax, 320
+push ax
+mov ax, 245
+push ax
+call PRINTA_HIST
 
 call F_ACUM
-
 call EQ_IMG
 call IMPRIME_IMG
 call HISTOG
+
+mov ax, 320
+push ax
+mov ax, 5
+push ax
 call PRINTA_HIST
 
 ;call PRINTA_FACUM
-
 
 mov ah,08h
 int 21h
@@ -47,7 +55,6 @@ mov al,[modo_anterior]   	; modo anterior
 int 10h
 mov ah,4ch
 int 21h
-
 
 ; ---------------------------- INTERFACE --------------------------------------
 INTERFACE:
@@ -463,6 +470,13 @@ HISTOG:     ;lembrar de colocar constante em 62500
 	xor si, si
 	xor di, di
 	xor ax, ax
+	mov cx, 255
+	zera:
+		mov word[HISTOGRAMA + si], 0000h
+		add si, 2
+	loop zera
+
+	xor si, si
 	mov cx, 62500
 	hist:
 		push cx
@@ -477,12 +491,19 @@ HISTOG:     ;lembrar de colocar constante em 62500
 	loop hist
 ret
 ; ----------------------------- IMPRIME HISTOGRAMA --------------------------
+; push posx  push posy
 PRINTA_HIST:
-	mov dx, 320 ; posx inicial
+	push bp
+	mov	bp,sp
+	mov dx, [bp+6]
+	mov di, [bp+4]
+	mov byte[cor], branco_intenso
+	;mov dx, 320 ; posx inicial
 	xor si,si
 	mov cx, 255
 	p_hist:
-		mov ax, 250 ;posy inicial
+		mov ax, di
+		;mov ax, 250 ;posy inicial
 		push dx
 		push dx ; x1
 		push ax	; y1
@@ -500,7 +521,8 @@ PRINTA_HIST:
 		inc dx
 		add si,2
 	loop p_hist
-ret
+	pop	bp
+ret 4
 ; ----------------------------- FUNCAO ACUMULADA ---------------------------
 F_ACUM:
 	xor si, si
@@ -885,7 +907,6 @@ DADOS: 		resb 	62501
 HISTOGRAMA:	resw	256
 FACUMULADA:	resw	256
 N_PIX 		dw 	62500
-
 
 ;*************************************************************************
 segment stack stack
