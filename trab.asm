@@ -22,37 +22,94 @@ mov ah,0
 int 10h
 
 call INTERFACE
+call OPC
+;call LE_ARQUIVO
 
-call LE_ARQUIVO
+;call IMPRIME_IMG
 
-call IMPRIME_IMG
+;call HISTOG
 
-call HISTOG
+;mov ax, 320
+;push ax
+;mov ax, 245
+;push ax
+;call PRINTA_HIST
 
-mov ax, 320
-push ax
-mov ax, 245
-push ax
-call PRINTA_HIST
+;call F_ACUM
+;call EQ_IMG
+;call IMPRIME_IMG
+;call HISTOG
 
-call F_ACUM
-call EQ_IMG
-call IMPRIME_IMG
-call HISTOG
-
-mov ax, 320
-push ax
-mov ax, 5
-push ax
-call PRINTA_HIST
+;mov ax, 320
+;push ax
+;mov ax, 5
+;push ax
+;call PRINTA_HIST
 
 ;call PRINTA_FACUM
 
-mov ah,08h
-int 21h
+mov ax, 20h
+int 33h
+
+mov ax, 01h
+int 33h
+
+main:
+	mov bx, 0
+	mov ax, 05h
+	int 33h
+
+;	CX = horizontal (X) position
+;	DX = vertical (Y) position  
+;	BX = botao do mouse apertado 1-esquerdo 2-direito
+	
+	cmp bx, 1
+	jne main
+	cmp dx, 99 ;pos y
+	jg main
+	cmp cx, 60 ;pos x
+	jl abrir
+	cmp cx, 120;pos x
+	jl sair
+	cmp cx, 180;pos x
+	jl histo
+	cmp cx, 251;pos x
+	jl histoe
+
+jmp main
+
+abrir:
+	mov byte[STATUS], 1h
+	call OPC
+	jmp main
+
+sair:
+	mov byte[STATUS], 2h
+	call OPC
+	jmp end
+
+histo:
+	mov byte[STATUS], 3h
+	call OPC
+	jmp main
+
+histoe:
+	mov byte[STATUS], 4h
+	call OPC
+	jmp main
+	
+end:
+
+mov ax, 20
+int 33h
+
+mov ax, 2
+int 33h
+
 mov ah,0   			; set video mode
 mov al,[modo_anterior]   	; modo anterior
 int 10h
+
 mov ah,4ch
 int 21h
 
@@ -142,6 +199,7 @@ INTERFACE:
 	mov	ax, 381 ; y
 	push ax
 	call line
+
 
 	;abrir
 	mov	byte[cor],branco_intenso
@@ -258,62 +316,6 @@ INTERFACE:
 	inc	dl			;avanca a coluna
 	loop   w_periodo
 
-	;Abrir
-	mov cx,5			;numero de caracteres
-	mov bx,0
-	mov dh,3			;linha 0-29
-	mov dl,1			;coluna 0-79
-	mov	byte[cor],branco_intenso
-	w_abrir:
-	call	cursor
-	mov al,[bx+ABRIR]
-	call caracter
-	inc bx			;proximo caracter
-	inc	dl			;avanca a coluna
-	loop   w_abrir
-
-	;Sair
-	mov cx,4			;numero de caracteres
-	mov bx,0
-	mov dh,3			;linha 0-29
-	mov dl,9			;coluna 0-79
-	mov	byte[cor],branco_intenso
-	w_sair:
-	call	cursor
-	mov al,[bx+SAIR]
-	call caracter
-	inc bx			;proximo caracter
-	inc	dl			;avanca a coluna
-	loop   w_sair
-
-	;Hist
-	mov cx,4			;numero de caracteres
-	mov bx,0
-	mov dh,3		;linha 0-29
-	mov dl,17			;coluna 0-79
-	mov	byte[cor],branco_intenso
-	w_hist:
-	call	cursor
-	mov al,[bx+HIST]
-	call caracter
-	inc bx			;proximo caracter
-	inc	dl			;avanca a coluna
-	loop   w_hist
-
-	;Histeq
-	mov cx,6			;numero de caracteres
-	mov bx,0
-	mov dh,3			;linha 0-29
-	mov dl,24			;coluna 0-79
-	mov	byte[cor],branco_intenso
-	w_histeq:
-	call	cursor
-	mov al,[bx+HISTEQ]
-	call caracter
-	inc bx			;proximo caracter
-	inc	dl			;avanca a coluna
-	loop   w_histeq
-
 	;Nome Histograma Normal no lado direito
 	mov cx,17			;numero de caracteres
 	mov bx,0
@@ -342,6 +344,99 @@ INTERFACE:
 	inc	dl			;avanca a coluna
 	loop   s_histeq
 
+	call OPC
+
+ret
+
+V_COR:
+	push bp
+	mov bp, sp
+	mov dx, [bp+4]
+	cmp [STATUS], dx
+	je MUDA_COR
+	mov byte[cor],branco_intenso
+	FIM_COR:
+	pop bp
+ret 2
+
+MUDA_COR:
+	mov byte[cor], amarelo
+jmp FIM_COR
+
+
+OPC:
+	;Abrir
+	mov di, 1h
+	push di ;passando estado
+	call V_COR
+
+	mov cx,5			;numero de caracteres
+	mov bx,0
+	mov dh,3			;linha 0-29
+	mov dl,1			;coluna 0-79
+
+	w_abrir:
+		call	cursor
+		mov al,[bx+ABRIR]
+		call caracter
+		inc bx			;proximo caracter
+		inc	dl			;avanca a coluna
+	loop   w_abrir
+
+	;Sair
+	mov di, 2h
+	push di ;passando estado
+	call V_COR
+
+	mov cx,4			;numero de caracteres
+	mov bx,0
+	mov dh,3			;linha 0-29
+	mov dl,9			;coluna 0-79
+
+	w_sair:
+		call	cursor
+		mov al,[bx+SAIR]
+		call caracter
+		inc bx			;proximo caracter
+		inc	dl			;avanca a coluna
+	loop   w_sair
+
+	;Hist
+	
+	mov di, 3h
+	push di ;passando estado
+	call V_COR
+
+	mov cx,4			;numero de caracteres
+	mov bx,0
+	mov dh,3		;linha 0-29
+	mov dl,17			;coluna 0-79
+
+	w_hist:
+		call	cursor
+		mov al,[bx+HIST]
+		call caracter
+		inc bx			;proximo caracter
+		inc	dl			;avanca a coluna
+	loop   w_hist
+
+	;Histeq
+	mov di, 4h
+	push di ;passando estado
+	call V_COR
+
+	mov cx,6			;numero de caracteres
+	mov bx,0
+	mov dh,3			;linha 0-29
+	mov dl,24			;coluna 0-79
+
+	w_histeq:
+		call	cursor
+		mov al,[bx+HISTEQ]
+		call caracter
+		inc bx			;proximo caracter
+		inc	dl			;avanca a coluna
+	loop   w_histeq
 ret
 ; ---------------------------- FIM DA INTERFACE -------------------------------
 
@@ -898,6 +993,7 @@ HISTEQ 		db 	'Histeq' ;6 letras
 S_HIST		db	'Histograma Normal' ;17 letras
 S_HISTEQ	db	'Histograma Equalizado' ;21 letras
 
+STATUS		db	0
 HANDLER 	dw 	0
 BUFFER 		db 	0,20h,'$'
 PIXEL 		db 	0,0,0,20h,'$'
