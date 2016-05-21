@@ -22,35 +22,9 @@ mov ah,0
 int 10h
 
 call INTERFACE
-call OPC
-;call LE_ARQUIVO
-
-;call IMPRIME_IMG
-
-;call HISTOG
-
-;mov ax, 320
-;push ax
-;mov ax, 245
-;push ax
-;call PRINTA_HIST
-
-;call F_ACUM
-;call EQ_IMG
-;call IMPRIME_IMG
-;call HISTOG
-
-;mov ax, 320
-;push ax
-;mov ax, 5
-;push ax
-;call PRINTA_HIST
-
-;call PRINTA_FACUM
 
 mov ax, 20h
 int 33h
-
 mov ax, 01h
 int 33h
 
@@ -58,11 +32,6 @@ main:
 	mov bx, 0
 	mov ax, 05h
 	int 33h
-
-;	CX = horizontal (X) position
-;	DX = vertical (Y) position  
-;	BX = botao do mouse apertado 1-esquerdo 2-direito
-	
 	cmp bx, 1
 	jne main
 	cmp dx, 99 ;pos y
@@ -75,12 +44,47 @@ main:
 	jl histo
 	cmp cx, 251;pos x
 	jl histoe
-
 jmp main
 
 abrir:
 	mov byte[STATUS], 1h
 	call OPC
+	call LE_ARQUIVO
+	call IMPRIME_IMG
+	call APAGA_HIST
+	mov byte[FLAG], 1h
+	jmp main
+
+histo:
+	mov byte[STATUS], 3h
+	call OPC
+	cmp byte[FLAG], 1h
+	jne main
+	mov byte[FLAG], 2h
+	call HISTOG
+	mov ax, 320
+	push ax
+	mov ax, 245
+	push ax
+	call PRINTA_HIST
+	jmp main
+
+histoe:
+	mov byte[STATUS], 4h
+	call OPC
+	cmp byte[FLAG], 2h
+	jne main
+	mov byte[FLAG], 0h
+	call F_ACUM
+	;call PRINTA_FACUM
+	call EQ_IMG
+	call IMPRIME_IMG
+	call HISTOG
+	mov ax, 320
+	push ax
+	mov ax, 5
+	push ax
+	call PRINTA_HIST
 	jmp main
 
 sair:
@@ -88,18 +92,7 @@ sair:
 	call OPC
 	jmp end
 
-histo:
-	mov byte[STATUS], 3h
-	call OPC
-	jmp main
-
-histoe:
-	mov byte[STATUS], 4h
-	call OPC
-	jmp main
-	
 end:
-
 mov ax, 20
 int 33h
 
@@ -344,7 +337,7 @@ INTERFACE:
 	inc	dl			;avanca a coluna
 	loop   s_histeq
 
-	call OPC
+	call OPC  ; imprime menu de opcoes
 
 ret
 
@@ -362,7 +355,6 @@ ret 2
 MUDA_COR:
 	mov byte[cor], amarelo
 jmp FIM_COR
-
 
 OPC:
 	;Abrir
@@ -402,7 +394,7 @@ OPC:
 	loop   w_sair
 
 	;Hist
-	
+
 	mov di, 3h
 	push di ;passando estado
 	call V_COR
@@ -438,9 +430,6 @@ OPC:
 		inc	dl			;avanca a coluna
 	loop   w_histeq
 ret
-; ---------------------------- FIM DA INTERFACE -------------------------------
-
-
 
 ; ---------------------------- LEITURA DE ARQUIVO -----------------------------
 LE_ARQUIVO:
@@ -496,11 +485,11 @@ LE_ARQUIVO:
 		jmp VOLTA
 
 		SAI:
-		xor bx, bx			; zera bx e di
-		xor di, di
-		mov bh, 1			; bh vai ter o valor a ser multiplicado na iteracao atual
-		mov bl, 10			; bl vai ter o valor a ser multiplicado na proxima iteracao
-		sub si, 1			; pega os algarismos de tras para frente
+			xor bx, bx			; zera bx e di
+			xor di, di
+			mov bh, 1			; bh vai ter o valor a ser multiplicado na iteracao atual
+			mov bl, 10			; bl vai ter o valor a ser multiplicado na proxima iteracao
+			sub si, 1			; pega os algarismos de tras para frente
 
 		A2B:
 			mov dl, byte[si]	; dl recebe o algarismo
@@ -521,7 +510,6 @@ LE_ARQUIVO:
 		add si, 1			; pega proximo dado
 		pop cx				; recupera cx
 	loop LE_PIX			; repete ate acabar os dados
-
 
 	mov bx,[HANDLER] 	; coloca manipulador do arquivo em bx
 	mov ah,3Eh 		; função 3Eh - fechar um arquivo
@@ -560,17 +548,50 @@ IMPRIME_IMG:
 		pop cx
 	loop imprime_l
 ret
-; ----------------------------- HISTOGRAMA --------------------------------
-HISTOG:     ;lembrar de colocar constante em 62500
+
+ZERA_HIST:
 	xor si, si
-	xor di, di
-	xor ax, ax
-	mov cx, 255
+	mov cx, 256
 	zera:
 		mov word[HISTOGRAMA + si], 0000h
 		add si, 2
 	loop zera
 
+ret
+
+APAGA_HIST:
+	mov byte[FLAG], 0h
+	mov byte[cor], preto
+	mov dx, 320 	;mov dx, 320 ; posx inicial
+	mov di, 245     ;mov dx, 245 ; posy inicial
+
+	apaga:
+		xor si,si
+		mov cx, 256
+		a_hist:
+			mov ax, di ;mov ax, 250 ;posy inicial
+			push dx
+			push dx ; x1
+			push ax	; y1
+			push dx ; x2
+			add ax, 200
+			push ax ;y2
+			call line
+			pop dx
+			inc dx
+			add si,2
+		loop a_hist
+		inc byte[FLAG]
+		mov dx, 320
+		mov di, 5
+		cmp byte[FLAG], 2
+		jne apaga
+ret
+; ----------------------------- HISTOGRAMA --------------------------------
+HISTOG:     ;lembrar de colocar constante em 62500
+	call ZERA_HIST
+	xor ax, ax
+	xor di, di
 	xor si, si
 	mov cx, 62500
 	hist:
@@ -595,7 +616,7 @@ PRINTA_HIST:
 	mov byte[cor], branco_intenso
 	;mov dx, 320 ; posx inicial
 	xor si,si
-	mov cx, 255
+	mov cx, 256
 	p_hist:
 		mov ax, di
 		;mov ax, 250 ;posy inicial
@@ -623,7 +644,7 @@ F_ACUM:
 	xor si, si
 	xor di, di
 	xor ax, ax
-	mov cx, 255
+	mov cx, 256
 	acumulacao:
 		push cx
 		add ax, [HISTOGRAMA + di]
@@ -636,7 +657,7 @@ ret
 PRINTA_FACUM:
 	mov dx, 320 ; posx inicial
 	xor si,si
-	mov cx, 255
+	mov cx, 256
 	p_acum:
 		mov ax, 250 ;posy inicial
 		push dx
@@ -993,7 +1014,8 @@ HISTEQ 		db 	'Histeq' ;6 letras
 S_HIST		db	'Histograma Normal' ;17 letras
 S_HISTEQ	db	'Histograma Equalizado' ;21 letras
 
-STATUS		db	0
+STATUS		dw	0
+FLAG		db	0
 HANDLER 	dw 	0
 BUFFER 		db 	0,20h,'$'
 PIXEL 		db 	0,0,0,20h,'$'
