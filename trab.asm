@@ -48,9 +48,10 @@ jmp main
 abrir:
 	mov byte[STATUS], 1h
 	call OPC ;muda a cor da opcao desejada
+	call APAGA_IMG
+	call APAGA_HIST ;apaga o histograma da tela
 	call LE_ARQUIVO ;le o arquivo
 	call IMPRIME_IMG ; imprime imagem
-	call APAGA_HIST ;apaga o histograma da tela
 	mov byte[FLAG], 1h ;flag para saber q o arquivo ja foi aberto
 	jmp main
 
@@ -557,6 +558,37 @@ IMPRIME_IMG:
 	call SHOW_MOUSE
 ret
 
+APAGA_IMG:
+	call HIDE_MOUSE
+	mov dx, 1  ;posx
+	mov ax, 380   ;posy
+	xor si, si
+	mov cx, 250 ;n de colunas na horizontal
+	mov byte[cor], preto
+	apaga_l: ; varia y
+		push cx
+		push ax
+		push dx
+		mov cx, 250
+		apaga_c: ;varia x
+			push cx
+			push ax
+			push dx ;posx
+			push ax	;posy
+			call plot_xy
+			pop ax
+			pop cx
+			add si,1
+			add dx, 1
+		loop apaga_c
+		pop dx
+		pop ax
+		sub ax,1
+		pop cx
+	loop apaga_l
+	call SHOW_MOUSE
+ret
+
 ZERA_HIST:
 	xor si, si
 	mov cx, 256
@@ -1040,9 +1072,9 @@ FLAG		db	0
 HANDLER 	dw 	0
 BUFFER 		db 	0,20h,'$'
 PIXEL 		db 	0,0,0,20h,'$'
-ARQUIVO 	db 	'imagem.txt','$'
+ARQUIVO 	db 	'imagem.txt',0
 RESULTADO 	db 	0, '$'
-DADOS: 		resb 	62501
+DADOS: 		resb 	62500
 HISTOGRAMA:	resw	256
 FACUMULADA:	resw	256
 N_PIX 		dw 	62500
