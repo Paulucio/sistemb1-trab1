@@ -21,14 +21,13 @@ mov al,12h
 mov ah,0
 int 10h
 
-call INTERFACE
+call INTERFACE ;imprime interface na tela
 
-mov ax, 20h
+mov ax, 20h ;ativa mouse
 int 33h
-mov ax, 01h
-int 33h
+call SHOW_MOUSE ;mostra mouse
 
-main:
+main: ;fica verificando se o usuario clicou em algum botao
 	mov bx, 0
 	mov ax, 05h
 	int 33h
@@ -48,61 +47,65 @@ jmp main
 
 abrir:
 	mov byte[STATUS], 1h
-	call OPC
-	call LE_ARQUIVO
-	call IMPRIME_IMG
-	call APAGA_HIST
-	mov byte[FLAG], 1h
+	call OPC ;muda a cor da opcao desejada
+	call LE_ARQUIVO ;le o arquivo
+	call IMPRIME_IMG ; imprime imagem
+	call APAGA_HIST ;apaga o histograma da tela
+	mov byte[FLAG], 1h ;flag para saber q o arquivo ja foi aberto
 	jmp main
 
 histo:
 	mov byte[STATUS], 3h
-	call OPC
-	cmp byte[FLAG], 1h
-	jne main
-	mov byte[FLAG], 2h
-	call HISTOG
+	call OPC ;muda a cor da opcao desejada
+	cmp byte[FLAG], 1h ;verifica se o arquivo ja foi aberto
+	jl main
+	call HISTOG ;gera histograma
 	mov ax, 320
 	push ax
 	mov ax, 245
 	push ax
-	call PRINTA_HIST
+	call PRINTA_HIST	;imprime histograma recebe a posicao pela pilha
 	jmp main
 
 histoe:
 	mov byte[STATUS], 4h
-	call OPC
-	cmp byte[FLAG], 2h
+	call OPC ;muda a cor da opcao desejada
+	cmp byte[FLAG], 1h ;verifica se o arquivo ja foi aberto
 	jne main
-	mov byte[FLAG], 0h
-	call F_ACUM
+	mov byte[FLAG], 3h
+	call HISTOG ;gera o histograma
+	call F_ACUM ;gera a freq acumulada
 	;call PRINTA_FACUM
-	call EQ_IMG
-	call IMPRIME_IMG
-	call HISTOG
+	call EQ_IMG ;equaliza a imagem
+	call IMPRIME_IMG ;imprime a imagem equalizada
+	call HISTOG ;gera o histograma da imagem equalizada
 	mov ax, 320
 	push ax
 	mov ax, 5
 	push ax
-	call PRINTA_HIST
+	call PRINTA_HIST ;printa o histograma
+	call LE_ARQUIVO ;recupera o histograma original
 	jmp main
 
 sair:
-	mov byte[STATUS], 2h
+	mov byte[STATUS], 2h ;sai do programa
 	call OPC
 	jmp end
 
 end:
+
+;desabilita o mouse
 mov ax, 20
 int 33h
 
-mov ax, 2
-int 33h
+call HIDE_MOUSE
 
+;restaura o modo de video anterior
 mov ah,0   			; set video mode
 mov al,[modo_anterior]   	; modo anterior
 int 10h
 
+;encerra programa
 mov ah,4ch
 int 21h
 
@@ -110,6 +113,7 @@ int 21h
 INTERFACE:
 	;Desenhar Janela externa
 	;limite esquerdo
+	call HIDE_MOUSE
 	mov	byte[cor],branco_intenso
 	;primeiro ponto
 	mov	ax, 0; x
@@ -338,10 +342,10 @@ INTERFACE:
 	loop   s_histeq
 
 	call OPC  ; imprime menu de opcoes
-
+	call SHOW_MOUSE
 ret
 
-V_COR:
+V_COR: ;verifica a cor da opcao
 	push bp
 	mov bp, sp
 	mov dx, [bp+4]
@@ -356,8 +360,9 @@ MUDA_COR:
 	mov byte[cor], amarelo
 jmp FIM_COR
 
-OPC:
+OPC: ;imprime texto da barra das opcoes
 	;Abrir
+	call HIDE_MOUSE
 	mov di, 1h
 	push di ;passando estado
 	call V_COR
@@ -429,6 +434,7 @@ OPC:
 		inc bx			;proximo caracter
 		inc	dl			;avanca a coluna
 	loop   w_histeq
+	call SHOW_MOUSE
 ret
 
 ; ---------------------------- LEITURA DE ARQUIVO -----------------------------
@@ -517,6 +523,7 @@ LE_ARQUIVO:
 ret
 ;--------------------------------------------- FIM LEITURA ARQUIVO ---------------------------
 IMPRIME_IMG:
+	call HIDE_MOUSE
 	mov dx, 1  ;posx
 	mov ax, 380   ;posy
 	xor si, si
@@ -547,6 +554,7 @@ IMPRIME_IMG:
 		sub ax,1
 		pop cx
 	loop imprime_l
+	call SHOW_MOUSE
 ret
 
 ZERA_HIST:
@@ -609,6 +617,7 @@ ret
 ; ----------------------------- IMPRIME HISTOGRAMA --------------------------
 ; push posx  push posy
 PRINTA_HIST:
+	call HIDE_MOUSE
 	push bp
 	mov	bp,sp
 	mov dx, [bp+6]
@@ -638,6 +647,7 @@ PRINTA_HIST:
 		add si,2
 	loop p_hist
 	pop	bp
+	call SHOW_MOUSE
 ret 4
 ; ----------------------------- FUNCAO ACUMULADA ---------------------------
 F_ACUM:
@@ -704,6 +714,17 @@ EQ_IMG:
 		pop cx
 	loop equaliza
 ret
+
+HIDE_MOUSE:
+	mov ax, 2h
+	int 33h
+ret
+
+SHOW_MOUSE:
+	mov ax, 1h
+	int 33h
+ret
+
 
 ;***************************************************************************
 ;
