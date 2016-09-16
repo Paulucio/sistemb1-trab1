@@ -4,7 +4,7 @@
 
 **Clone Repository**
 ```sh
-git clone https://github.com/Paulucio/sistemb1-trab1.git
+git clone https://github.com/lspaulucio/sistemb1-trab1.git
 ```
 **Dependences** 
 
