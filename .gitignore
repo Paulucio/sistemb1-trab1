@@ -24,7 +24,7 @@
 
 # Assembly files
 *.LST
-*.EXE
+.EXE
 *.OBJ
 
 # Executables
