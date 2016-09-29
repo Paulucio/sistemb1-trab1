@@ -1,6 +1,6 @@
 #Trabalho Computacional de Sistemas Embarcados I
 
-**Objetivo:** Fazer um equalizador de imagem.
+**Objective:** Create a picture equalizer.
 
 **Clone Repository**
 ```sh
@@ -14,6 +14,17 @@ git clone https://github.com/lspaulucio/sistemb1-trab1.git
 
   ~$ sudo apt-get install dosbox
   ```
+
+**Tip**: Mounting a directory on dosbox:
+  
+  - On dosbox terminal:
+  
+  ```  
+  > mount C <path-to-project-folder>
+  > C:
+  
+  ```
+
 **Compile**
 
 - On dosbox terminal, make sure you are in project folder
